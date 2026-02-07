@@ -1,9 +1,22 @@
 const mongoose = require("mongoose");
 
-module.exports = mongoose.model(
-  "Result",
-  new mongoose.Schema({
-    userId: mongoose.Schema.Types.ObjectId,
-    score: Number
-  })
+const ResultSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    score: {
+      type: Number,
+      required: true
+    },
+    totalQuestions: {
+      type: Number,
+      required: true   // 🔥 THIS WAS MISSING
+    }
+  },
+  { timestamps: true }
 );
+
+module.exports = mongoose.model("Result", ResultSchema);

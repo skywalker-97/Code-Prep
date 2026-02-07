@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 
+const auth = require("../middleware/auth"); // ✅ FIX (IMPORTANT)
+
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
@@ -24,6 +26,11 @@ router.post("/login", async (req, res) => {
   );
 
   res.json({ token });
+});
+
+// ✅ PROFILE ROUTE (NOW WORKING)
+router.get("/me", auth, (req, res) => {
+  res.json(req.user);
 });
 
 module.exports = router;
