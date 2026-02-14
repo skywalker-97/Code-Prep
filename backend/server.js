@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const PORT = process.env.PORT || 5000;
+
 
 connectDB();
 const app = express();
@@ -14,4 +16,4 @@ app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/results", require("./routes/result.routes"));
 
 
-app.listen(5000, () => console.log("Backend running on 5000"));
+app.listen(PORT, () => console.log("Backend running on 5000"));

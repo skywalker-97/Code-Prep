@@ -8,10 +8,33 @@ const auth = require("../middleware/auth"); // ✅ FIX (IMPORTANT)
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const user = new User(req.body);
-  await user.save();
-  res.json({ msg: "Registered" });
+  try {
+    const { name, email, password } = req.body;
+
+    // check if user exists
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
+
+    // hash password
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashed,
+    });
+
+    await user.save();
+
+    res.status(201).json({ msg: "Registered successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error" });
+  }
 });
+
 
 router.post("/login", async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
