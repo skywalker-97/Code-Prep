@@ -8,11 +8,15 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 const app = express();
 
-app.use(cors({
+const corsOptions = {
   origin: "https://code-prep-frontend-ix5g.onrender.com",
-  credentials: true
-}));
-app.options("*", cors());
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 

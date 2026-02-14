@@ -1,9 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://code-prep-backend-t9wt.onrender.com/api/auth/register"
+  baseURL: "https://code-prep-backend-t9wt.onrender.com/api"
 });
-
 
 // 🔥 AUTO ATTACH TOKEN TO EVERY REQUEST
 api.interceptors.request.use((config) => {
