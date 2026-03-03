@@ -15,7 +15,7 @@ export default function Register() {
       });
 
       console.log("Response:", res.data);
-      alert("Registration Successful ✅");
+      
       window.location.href = "/";
     } catch (error) {
       console.error("Register Error:", error.response?.data || error.message);

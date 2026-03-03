@@ -6,9 +6,19 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   const login = async () => {
-    const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    window.location.href = "/exam";
+    try {
+      const res = await api.post("/auth/login", {
+        email,
+        password
+      });
+
+      localStorage.setItem("token", res.data.token);
+      window.location.href = "/exam";
+
+    } catch (err) {
+      console.log("Login Error:", err.response?.data);
+      alert(err.response?.data?.msg || "Login failed");
+    }
   };
 
   return (
@@ -16,19 +26,31 @@ export default function Login() {
       <div className="p-6 border w-80">
         <h2 className="text-xl font-bold mb-4">Login</h2>
 
-        <input className="border p-2 w-full mb-3" placeholder="Email"
-          onChange={e => setEmail(e.target.value)} />
-        <input type="password" className="border p-2 w-full mb-3"
-          placeholder="Password"
-          onChange={e => setPassword(e.target.value)} />
+        <input
+          className="border p-2 w-full mb-3"
+          placeholder="Email"
+          onChange={e => setEmail(e.target.value)}
+        />
 
-        <button onClick={login}
-          className="bg-blue-600 text-white w-full py-2">
+        <input
+          type="password"
+          className="border p-2 w-full mb-3"
+          placeholder="Password"
+          onChange={e => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={login}
+          className="bg-blue-600 text-white w-full py-2"
+        >
           Login
         </button>
 
         <p className="text-sm mt-2">
-          New user? <a href="/register" className="text-blue-600">Register</a>
+          New user?{" "}
+          <a href="/register" className="text-blue-600">
+            Register
+          </a>
         </p>
       </div>
     </div>
