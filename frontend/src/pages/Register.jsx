@@ -8,11 +8,18 @@ export default function Register() {
 
   const register = async () => {
     try {
-      const res = await api.post("/auth/register", {
+      const payload = {
         name,
         email,
         password,
-      });
+      };
+
+      let res;
+      try {
+        res = await api.post("/register", payload);
+      } catch (err) {
+        res = await api.post("/auth/register", payload);
+      }
 
       console.log("Response:", res.data);
       

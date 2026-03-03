@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://code-prep-backend-t9wt.onrender.com/api"
+  baseURL: "https://code-prep-backend-t9wt.onrender.com/api",
 });
 
-// 🔥 AUTO ATTACH TOKEN TO EVERY REQUEST
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {

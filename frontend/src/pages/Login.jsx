@@ -7,10 +7,17 @@ export default function Login() {
 
   const login = async () => {
     try {
-      const res = await api.post("/auth/login", {
-        email,
-        password
-      });
+      const payload = {
+        email: email.trim().toLowerCase(),
+        password: password.trim()
+      };
+
+      let res;
+      try {
+        res = await api.post("/login", payload);
+      } catch (err) {
+        res = await api.post("/auth/login", payload);
+      }
 
       localStorage.setItem("token", res.data.token);
       window.location.href = "/exam";

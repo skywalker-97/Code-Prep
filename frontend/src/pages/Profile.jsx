@@ -6,9 +6,17 @@ export default function Profile() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    api.get("/auth/me", {
-      headers: { Authorization: localStorage.getItem("token") }
-    }).then(res => setUser(res.data));
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    };
+
+    api.get("/me", { headers })
+      .then(res => setUser(res.data))
+      .catch(() => api.get("/auth/me", { headers }))
+      .then(res => {
+        if (res) setUser(res.data);
+      })
+      .catch(() => setUser(null));
   }, []);
 
   if (!user) return null;

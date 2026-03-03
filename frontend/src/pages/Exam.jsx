@@ -3,7 +3,6 @@ import api from "../api";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
-
 export default function Exam() {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -12,68 +11,89 @@ export default function Exam() {
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
 
+  // ================= CHECK AUTH =================
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   // ================= LOAD QUESTIONS =================
   useEffect(() => {
-    api.get("/exam/questions")
-      .then(res => setQuestions(res.data))
-      .catch(() => alert("Failed to load questions"));
-  }, []);
-  useEffect(() => {
-  api.get("/exam/status")
-    .then(res => {
-      if (res.data.submitted) {
-        navigate("/results", { replace: true });
+    const loadQuestions = async () => {
+      try {
+        const res = await api.get("/exam/questions");
+        setQuestions(res.data);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/", { replace: true });
+        } else {
+          alert("Failed to load questions");
+        }
       }
-    });
-}, [navigate]);
+    };
 
+    loadQuestions();
+  }, [navigate]);
+
+  // ================= CHECK SUBMISSION STATUS =================
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await api.get("/exam/status");
+        if (res.data.submitted) {
+          navigate("/results", { replace: true });
+        }
+      } catch (err) {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/", { replace: true });
+        }
+      }
+    };
+
+    checkStatus();
+  }, [navigate]);
 
   // ================= SAFE ANSWER UPDATE =================
   const handleSelect = (qid, opt) => {
-    setAnswers(prev => {
-      const updated = { ...prev, [qid]: opt };
-      return updated;
-    });
+    setAnswers(prev => ({
+      ...prev,
+      [qid]: opt,
+    }));
   };
 
-  // ================= SUBMIT (FREEZE ANSWERS) =================
-  function submitExam() {
+  // ================= SUBMIT EXAM =================
+  const submitExam = async () => {
     if (submitted) return;
 
     setSubmitted(true);
 
-    // 🔥 freeze answers at submit time
-    const finalAnswers = { ...answers };
-
-    console.log("FINAL ANSWERS SUBMITTED:", finalAnswers);
-
-    api.post("/exam/submit", { answers: finalAnswers })
-      .then(() => {
-        navigate("/results", { replace: true });
-
-      })
-      .catch(() => {
-        alert("Submit failed");
-        setSubmitted(false);
-      });
-  }
+    try {
+      await api.post("/exam/submit", { answers });
+      navigate("/results", { replace: true });
+    } catch (err) {
+      alert("Submit failed");
+      setSubmitted(false);
+    }
+  };
 
   // ================= TIMER =================
   useEffect(() => {
     if (submitted) return;
 
-    if (timeLeft === 0) {
+    if (timeLeft <= 0) {
       submitExam();
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeLeft(t => t - 1);
+      setTimeLeft(prev => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, submitted]);
 
   // ================= PREVENT REFRESH =================
@@ -89,17 +109,17 @@ export default function Exam() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [submitted]);
 
+  // ================= PREVENT BACK BUTTON =================
   useEffect(() => {
-  window.history.pushState(null, "", window.location.href);
-  window.onpopstate = () => {
-    window.history.go(1);
-  };
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = () => {
+      window.history.go(1);
+    };
 
-  return () => {
-    window.onpopstate = null;
-  };
-}, []);
-
+    return () => {
+      window.onpopstate = null;
+    };
+  }, []);
 
   const q = questions[current];
 
@@ -114,11 +134,13 @@ export default function Exam() {
             Question {current + 1} / {questions.length}
           </span>
 
-          <span className={
-            timeLeft < 60
-              ? "text-red-600 font-semibold"
-              : "text-green-600"
-          }>
+          <span
+            className={
+              timeLeft < 60
+                ? "text-red-600 font-semibold"
+                : "text-green-600"
+            }
+          >
             ⏱ {Math.floor(timeLeft / 60)}:
             {String(timeLeft % 60).padStart(2, "0")}
           </span>
@@ -132,7 +154,7 @@ export default function Exam() {
             </h2>
 
             <div className="space-y-3">
-              {q.options.map(opt => (
+              {q.options.map((opt) => (
                 <label
                   key={opt}
                   className={`block p-3 border rounded cursor-pointer ${
@@ -143,8 +165,8 @@ export default function Exam() {
                 >
                   <input
                     type="radio"
-                    name={q._id}           // 🔥 important
-                    value={opt}            // 🔥 important
+                    name={q._id}
+                    value={opt}
                     checked={answers[q._id] === opt}
                     onChange={(e) =>
                       handleSelect(q._id, e.target.value)
@@ -163,7 +185,7 @@ export default function Exam() {
           <button
             className="btn btn-secondary"
             disabled={current === 0 || submitted}
-            onClick={() => setCurrent(c => c - 1)}
+            onClick={() => setCurrent((c) => c - 1)}
           >
             Previous
           </button>
@@ -180,7 +202,7 @@ export default function Exam() {
             <button
               className="btn btn-primary"
               disabled={submitted}
-              onClick={() => setCurrent(c => c + 1)}
+              onClick={() => setCurrent((c) => c + 1)}
             >
               Next
             </button>
