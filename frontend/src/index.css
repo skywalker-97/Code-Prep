@@ -2,28 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-100 text-gray-800;
+:root {
+  color-scheme: light;
 }
 
-/* Buttons */
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .btn {
   @apply px-4 py-2 rounded-md font-medium transition;
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
+  @apply bg-emerald-600 text-white hover:bg-emerald-700;
 }
 
 .btn-secondary {
-  @apply bg-gray-200 hover:bg-gray-300;
+  @apply bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700;
 }
 
 .btn-danger {
   @apply bg-red-500 text-white hover:bg-red-600;
 }
 
-/* Card */
 .card {
-  @apply bg-white rounded-lg shadow p-6;
+  @apply bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6;
 }

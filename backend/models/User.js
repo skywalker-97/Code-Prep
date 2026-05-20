@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
@@ -18,18 +18,22 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "student"
-  }
+  },
+  bookmarkedProblems: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Problem"
+    }
+  ]
 });
 
-// ✅ Hash only if password is modified
-userSchema.pre("save", async function (next) {
-
+// Hash password only when it changes (Mongoose v9 async middleware style).
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
 
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 module.exports = mongoose.model("User", userSchema);

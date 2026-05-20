@@ -13,7 +13,12 @@ const ResultSchema = new mongoose.Schema(
     },
     totalQuestions: {
       type: Number,
-      required: true   // 🔥 THIS WAS MISSING
+      required: true
+    },
+    timeTakenSeconds: {
+      type: Number,
+      default: 0,
+      min: 0
     }
   },
   { timestamps: true }

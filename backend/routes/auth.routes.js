@@ -1,53 +1,92 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 const User = require("../models/User");
-
-const auth = require("../middleware/auth"); // ✅ FIX (IMPORTANT)
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ msg: "Database not connected. Start MongoDB / fix MONGO_URI." });
+    }
+
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ msg: "All fields required" });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = String(name).trim();
+    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanPassword = String(password).trim();
+
+    if (cleanName.length < 2) {
+      return res.status(400).json({ msg: "Name must be at least 2 characters" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ msg: "Please enter a valid email address" });
+    }
+
+    if (cleanPassword.length < 6) {
+      return res.status(400).json({ msg: "Password must be at least 6 characters" });
+    }
 
     const exists = await User.findOne({ email: cleanEmail });
     if (exists) {
       return res.status(400).json({ msg: "User already exists" });
     }
 
+    const userRole = role === "admin" ? "admin" : "student";
+
     const user = new User({
-      name: name.trim(),
+      name: cleanName,
       email: cleanEmail,
-      password: password.trim(),   // ✅ NO MANUAL HASHING
+      password: cleanPassword,
+      role: userRole
     });
 
     await user.save();
 
-    res.status(201).json({ msg: "Registered successfully" });
-
+    res.status(201).json({
+      msg: `${userRole} registered successfully`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (err) {
     console.error(err);
+    const isDbIssue =
+      err?.name === "MongoServerSelectionError" ||
+      String(err?.message || "").toLowerCase().includes("buffering timed out") ||
+      String(err?.message || "").toLowerCase().includes("querysrv") ||
+      String(err?.message || "").toLowerCase().includes("etimeout");
+    if (isDbIssue) {
+      return res.status(503).json({ msg: "Database connection failed. Check MONGO_URI / network." });
+    }
     res.status(500).json({ msg: "Server error" });
   }
 });
 
-
-
 router.post("/login", async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ msg: "Database not connected. Start MongoDB / fix MONGO_URI." });
+    }
+
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ msg: "All fields required" });
     }
-    
+
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
@@ -69,18 +108,24 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ token });
-
+    res.json({ token, role: user.role });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
 
+router.get("/me", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("name email role");
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-// ✅ PROFILE ROUTE (NOW WORKING)
-router.get("/me", auth, (req, res) => {
-  res.json(req.user);
+    return res.json(user);
+  } catch (err) {
+    return res.status(500).json({ msg: "Server error" });
+  }
 });
 
 router.post("/change", auth, async (req, res) => {
